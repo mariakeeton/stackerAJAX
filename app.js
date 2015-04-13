@@ -6,6 +6,13 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+	$('.inspiration-getter').submit( function(event){
+		// zero out results if previous search has run
+		$('.results').html('');
+		// get the value of the tag the user submitted
+		var tag = $(this).find("input[name='answerers']").val();
+		getTopAnswerer(tag);
+	});
 });
 
 // this function takes the question object returned by StackOverflow 
@@ -35,9 +42,40 @@ var showQuestion = function(question) {
 													question.owner.display_name +
 												'</a>' +
 							'</p>' +
- 							'<p>Reputation: ' + question.owner.reputation + '</p>'
-	);
+ 							'<p>Reputation: ' + question.owner.reputation + '</p>');
 
+	return result;
+};
+
+// this function takes the answerer object returned by StackOverflow 
+// and creates new result to be appended to DOM
+var showTopAnswerer = function(answerer) {
+	
+	// clone our result template code
+	var result = $('.templates .answerer').clone();
+
+	//Add user name and gravitar
+	var answererPic = result.find('.user-name img');
+	answererPic.attr('src', answerer.user.profile_image);
+	
+	
+	var answererName = result.find('.user-name p');
+	answererName.text(answerer.user.display_name);
+
+	
+	// set the reputation property in result
+	var rep = result.find('.reputation');
+	rep.text(answerer.user.reputation);
+
+	// set the score
+	var score = result.find('.score');
+	score.text(answerer.score);
+	
+	//set profile link
+	var userProfile = result.find('.profile-link a');
+	userProfile.attr('href', answerer.user.link);
+	userProfile.text(answerer.user.link);
+	
 	return result;
 };
 
@@ -87,6 +125,33 @@ var getUnanswered = function(tags) {
 		$('.search-results').append(errorElem);
 	});
 };
+
+
+var getTopAnswerer = function(ansTag) {
+	var request = 	{tag: ansTag,
+					site:'stackoverflow'};
+	var result = $.ajax({
+		url: 'http://api.stackexchange.com/2.2/tags/' + ansTag + '/top-answerers/all_time',
+		data: request,
+		dataType: "jsonp",
+		type: "GET",
+		})
+	.done(function(result){
+		var searchResults = showSearchResults(request.tag, result.items.length);
+
+		$('.search-results').html(searchResults);
+
+		$.each(result.items, function(i, item) {
+			var topAnswerer = showTopAnswerer(item);
+			$('.results').append(topAnswerer);
+		});
+	})
+	.fail(function(jqXHR, error, errorThrown){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	})
+};
+
 
 
 
