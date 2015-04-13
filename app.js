@@ -151,7 +151,3 @@ var getTopAnswerer = function(ansTag) {
 		$('.search-results').append(errorElem);
 	})
 };
-
-
-
-
